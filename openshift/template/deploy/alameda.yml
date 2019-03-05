@@ -414,8 +414,6 @@ objects:
             value: "alameda-operator.${PROJECT_NAME}.svc.cluster.local:50050"
           - name: DATAHUB_ADDRESS
             value: "alameda-datahub.${PROJECT_NAME}.svc.cluster.local:50050"
-        securityContext:
-          runAsUser: 0
         serviceAccount: alameda-ai
         serviceAccountName: alameda-ai
 - apiVersion: v1
