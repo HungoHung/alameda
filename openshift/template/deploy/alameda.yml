@@ -143,7 +143,6 @@ objects:
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: ClusterRole
   metadata:
-    creationTimestamp: null
     name: "alameda-operator-${PROJECT_NAME}"
   rules:
   - apiGroups:
@@ -204,6 +203,18 @@ objects:
     verbs: 
     - get
 - apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    name: "alameda-evictioner-${PROJECT_NAME}"
+  rules:
+  - apiGroups:
+    - ""
+    resources:
+    - pods
+    verbs:
+    - get
+    - delete
+- apiVersion: rbac.authorization.k8s.io/v1
   kind: ClusterRoleBinding
   metadata:
     name: "alameda-datahub-${PROJECT_NAME}"
@@ -226,6 +237,18 @@ objects:
   subjects:
   - kind: ServiceAccount
     name: alameda-operator
+    namespace: "${PROJECT_NAME}"
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: "alameda-evictioner-${PROJECT_NAME}"
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: alameda-evictioner-${PROJECT_NAME}
+  subjects:
+  - kind: ServiceAccount
+    name: alameda-evictioner
     namespace: "${PROJECT_NAME}"
 - apiVersion: v1
   kind: ServiceAccount
@@ -510,7 +533,32 @@ objects:
               defaultMode: 420
               name: grafana-datasources
             name: grafana-datasources            
-
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: alameda-evictioner
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: alameda-evictioner
+    annotations:
+      description: Defines how to deploy the alameda-evictioner
+      template.alpha.openshift.io/wait-for-ready: 'true'
+  spec:
+    replicas: 1
+    selector:
+      app: alameda-evictioner
+    template:
+      metadata:
+        name: alameda-evictioner
+        labels:
+          app: alameda-evictioner
+      spec:
+        containers:
+        - name: alameda-evictioner
+          image: containersai/alameda-evictioner:latest
+        serviceAccount: alameda-evictioner
+        serviceAccountName: alameda-evictioner
 parameters:
 - name: PROJECT_NAME
   displayName: alameda namespace
